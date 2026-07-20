@@ -1,4 +1,4 @@
-backend/config-server/HELP.md
+HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
@@ -28,15 +28,6 @@ target/
 build/
 !**/src/main/**/build/
 !**/src/test/**/build/
-# Maven
-**/target/
 
-# IntelliJ
-.idea/
-
-*.iml
 ### VS Code ###
 .vscode/
-# Spring Cloud Config Repository
-quizhub-config-repo/
-quizhub-config-repo-backup/
