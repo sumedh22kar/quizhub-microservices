@@ -10,7 +10,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import com.quizhub.authservice.exception.UnauthorizedException;
+import org.springframework.security.core.Authentication;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -45,6 +46,20 @@ public class AuthController {
                         .success(true)
                         .message("Login successful")
                         .data(response)
+                        .build()
+        );
+    }
+    @RequestMapping(value = "/me", method = {RequestMethod.GET, RequestMethod.POST})
+    public ResponseEntity<ApiResponse<String>> me(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new UnauthorizedException("User is not authenticated");
+        }
+
+        return ResponseEntity.ok(
+                ApiResponse.<String>builder()
+                        .success(true)
+                        .message("Authenticated user")
+                        .data(authentication.getName())
                         .build()
         );
     }
