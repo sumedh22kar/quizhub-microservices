@@ -34,11 +34,10 @@
     </properties>
 
     <modules>
-
         <module>backend/config-server</module>
-
         <module>backend/discovery-server</module>
-
+        <module>backend/api-gateway</module>
+        <module>backend/auth-service</module>
     </modules>
 
     <dependencyManagement>
