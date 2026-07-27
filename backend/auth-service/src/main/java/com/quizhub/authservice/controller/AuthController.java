@@ -2,6 +2,8 @@ package com.quizhub.authservice.controller;
 
 import com.quizhub.authservice.common.ApiResponse;
 import com.quizhub.authservice.dto.request.LoginRequest;
+import com.quizhub.authservice.dto.request.LogoutRequest;
+import com.quizhub.authservice.dto.request.RefreshTokenRequest;
 import com.quizhub.authservice.dto.request.RegisterRequest;
 import com.quizhub.authservice.dto.response.LoginResponse;
 import com.quizhub.authservice.dto.response.RegisterResponse;
@@ -60,6 +62,47 @@ public class AuthController {
                         .success(true)
                         .message("Authenticated user")
                         .data(authentication.getName())
+                        .build()
+        );
+    }
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<LoginResponse>> refreshToken(
+            @Valid @RequestBody RefreshTokenRequest request
+    ) {
+
+        LoginResponse response = authService.refreshToken(request);
+
+        return ResponseEntity.ok(
+                ApiResponse.<LoginResponse>builder()
+                        .success(true)
+                        .message("Token refreshed successfully")
+                        .data(response)
+                        .build()
+        );
+    }
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @Valid @RequestBody LogoutRequest request
+    ) {
+
+        authService.logout(request);
+
+        return ResponseEntity.ok(
+                ApiResponse.<Void>builder()
+                        .success(true)
+                        .message("Logout successful")
+                        .build()
+        );
+    }
+    @PostMapping("/logout-all")
+    public ResponseEntity<ApiResponse<Void>> logoutAll() {
+
+        authService.logoutAll();
+
+        return ResponseEntity.ok(
+                ApiResponse.<Void>builder()
+                        .success(true)
+                        .message("Logged out from all devices")
                         .build()
         );
     }
