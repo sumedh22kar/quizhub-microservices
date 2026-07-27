@@ -1,18 +1,27 @@
 package com.quizhub.authservice.exception;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import java.time.Instant;
 
-public record ErrorResponse(
+@Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class ErrorResponse {
 
-        Instant timestamp,
+    @Builder.Default
+    private boolean success = false;
 
-        int status,
+    private String message;
 
-        String error,
+    private Object errors;
 
-        String message,
-
-        String path
-
-) {
+    @Builder.Default
+    private Instant timestamp = Instant.now();
 }

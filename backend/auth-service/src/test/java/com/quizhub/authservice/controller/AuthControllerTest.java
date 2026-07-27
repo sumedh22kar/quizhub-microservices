@@ -67,6 +67,24 @@ class AuthControllerTest {
     }
 
     @Test
+    void testRegister_Success() throws Exception {
+        com.quizhub.authservice.dto.request.RegisterRequest registerRequest = com.quizhub.authservice.dto.request.RegisterRequest.builder()
+                .firstName("New")
+                .lastName("User")
+                .email("newuser@example.com")
+                .password("Password123!")
+                .build();
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(registerRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("User registered successfully"))
+                .andExpect(jsonPath("$.data.email").value("newuser@example.com"));
+    }
+
+    @Test
     void testLogin_Success() throws Exception {
         LoginRequest loginRequest = LoginRequest.builder()
                 .email(testEmail)
