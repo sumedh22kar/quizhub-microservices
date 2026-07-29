@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: config-server
+
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/<sumedh22kar>/quizhub-config-repo.git
+          clone-on-start: true
+
+server:
+  port: 8888
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+  endpoint:
+    health:
+      show-details: always
+
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+  tracing:
+    sampling:
+      probability: 1.0
+
+zipkin:
+  tracing:
+    endpoint: http://zipkin:9411/api/v2/spans

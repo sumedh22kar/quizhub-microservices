@@ -38,6 +38,10 @@
         <module>backend/discovery-server</module>
         <module>backend/api-gateway</module>
         <module>backend/auth-service</module>
+        <module>backend/quiz-service</module>
+        <module>backend/question-service</module>
+        <module>backend/submission-service</module>
+        <module>backend/result-service</module>
     </modules>
 
     <dependencyManagement>

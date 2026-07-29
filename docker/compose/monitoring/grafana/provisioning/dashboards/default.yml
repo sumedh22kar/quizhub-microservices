@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: 'QuizHub Microservices'
+    orgId: 1
+    folder: 'QuizHub'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/json
