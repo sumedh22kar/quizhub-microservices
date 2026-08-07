@@ -2,7 +2,8 @@ package com.quizhub.aiagent.prompt;
 
 import com.quizhub.aiagent.dto.InternalQuestionResponse;
 import org.springframework.stereotype.Component;
-
+import com.quizhub.aiagent.dto.internal.InternalSubmissionAnswerResponse;
+import java.util.List;
 @Component
 public class PromptBuilder {
 
@@ -133,5 +134,58 @@ public class PromptBuilder {
                         question.getOptionC(),
                         question.getOptionD()
                 );
+    }
+    public String buildReviewSubmissionPrompt(
+            List<InternalQuestionResponse> questions,
+            List<InternalSubmissionAnswerResponse> answers
+    ) {
+
+        StringBuilder prompt = new StringBuilder();
+
+        prompt.append("""
+You are an expert programming instructor.
+
+Review the student's quiz submission.
+
+For every question:
+
+1. State whether the student's answer is correct.
+2. Explain the correct concept.
+3. Explain why the selected answer is correct or incorrect.
+4. Give one improvement tip.
+
+Finally provide:
+
+- Overall performance
+- Strengths
+- Weaknesses
+- Recommended study topics
+
+""");
+
+        for (InternalQuestionResponse question : questions) {
+
+            var answer = answers.stream()
+                    .filter(a -> a.getQuestionId().equals(question.getId()))
+                    .findFirst()
+                    .orElse(null);
+
+            prompt.append("\n-------------------------\n");
+            prompt.append("Question: ")
+                    .append(question.getQuestionText())
+                    .append("\n");
+
+            prompt.append("Correct Answer: ")
+                    .append(question.getCorrectAnswer())
+                    .append("\n");
+
+            if (answer != null) {
+                prompt.append("Student Answer: ")
+                        .append(answer.getSelectedAnswer())
+                        .append("\n");
+            }
+        }
+
+        return prompt.toString();
     }
 }
