@@ -27,4 +27,6 @@ public interface QuestionService {
     List<InternalQuestionResponse> getInternalQuestions(UUID quizId);
 
     public InternalQuestionResponse getInternalQuestion(UUID id);
+
+    List<InternalQuestionResponse> getQuestionsByIds(List<UUID> ids);
 }

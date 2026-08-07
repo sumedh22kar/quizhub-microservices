@@ -150,4 +150,14 @@ public class QuestionServiceImpl implements QuestionService {
         return questionMapper.toInternal(question);
 
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<InternalQuestionResponse> getQuestionsByIds(List<UUID> ids) {
+
+        return questionRepository.findByIdIn(ids)
+                .stream()
+                .map(questionMapper::toInternal)
+                .toList();
+    }
 }
