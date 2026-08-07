@@ -1,0 +1,15 @@
+server:
+  port: ${SERVER_PORT:9006}
+
+spring:
+  application:
+    name: ai-agent-service
+  config:
+    import: optional:configserver:http://localhost:8888
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        options:
+          model: qwen3:8b
+          temperature: 0.7

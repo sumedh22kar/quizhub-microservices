@@ -42,6 +42,7 @@
         <module>backend/question-service</module>
         <module>backend/submission-service</module>
         <module>backend/result-service</module>
+        <module>backend/ai-agent-service</module>
     </modules>
 
     <dependencyManagement>

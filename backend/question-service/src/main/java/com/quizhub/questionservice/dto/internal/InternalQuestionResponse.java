@@ -18,7 +18,25 @@ public class InternalQuestionResponse implements Serializable {
 
     private UUID quizId;
 
+    private String questionText;
+
+    private String optionA;
+
+    private String optionB;
+
+    private String optionC;
+
+    private String optionD;
+
     private String correctAnswer;
+
+    private String explanation;
+
+    private String difficulty;
+
+    private String subject;
+
+    private String topic;
 
     private Integer marks;
 }

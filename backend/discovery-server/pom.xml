@@ -11,8 +11,8 @@
 	<groupId>com.quizhub</groupId>
 	<artifactId>discovery-server</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name/>
-	<description/>
+	<name>discovery-server</name>
+	<description>Discovery Server Microservice for QuizHub</description>
 	<url/>
 	<licenses>
 		<license/>

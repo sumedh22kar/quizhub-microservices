@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.UUID;
 
-@FeignClient(name = "quiz-service", url = "${QUIZ_SERVICE_URL:http://localhost:9002}")
+@FeignClient(name = "quiz-service", url = "${QUIZ_SERVICE_URL:http://${QUIZ_SERVICE_HOST:localhost}:${QUIZ_SERVICE_PORT:9002}}")
 public interface QuizServiceClient {
 
     @GetMapping("/api/v1/internal/quizzes/{quizId}/exists")

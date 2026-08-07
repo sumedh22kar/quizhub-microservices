@@ -6,11 +6,11 @@ spring:
     config:
       server:
         git:
-          uri: https://github.com/<sumedh22kar>/quizhub-config-repo.git
+          uri: ${CONFIG_REPO_URI:https://github.com/sumedh22kar/quizhub-config-repo.git}
           clone-on-start: true
 
 server:
-  port: 8888
+  port: ${SERVER_PORT:8888}
 
 management:
   endpoints:
@@ -32,4 +32,4 @@ management:
 
 zipkin:
   tracing:
-    endpoint: http://zipkin:9411/api/v2/spans
+    endpoint: http://${ZIPKIN_HOST:localhost}:${ZIPKIN_PORT:9411}/api/v2/spans

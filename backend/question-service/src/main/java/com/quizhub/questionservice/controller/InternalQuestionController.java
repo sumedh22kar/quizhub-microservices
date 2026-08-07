@@ -27,4 +27,12 @@ public class InternalQuestionController {
                 questionService.getInternalQuestions(quizId)
         );
     }
+    @GetMapping("/{id}")
+    public ResponseEntity<InternalQuestionResponse> getQuestion(
+            @PathVariable UUID id
+    ) {
+        return ResponseEntity.ok(
+                questionService.getInternalQuestion(id)
+        );
+    }
 }

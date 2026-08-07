@@ -11,8 +11,8 @@
 	<groupId>com.quizhub</groupId>
 	<artifactId>config-server</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name/>
-	<description/>
+	<name>config-server</name>
+	<description>Config Server Microservice for QuizHub</description>
 	<url/>
 	<licenses>
 		<license/>

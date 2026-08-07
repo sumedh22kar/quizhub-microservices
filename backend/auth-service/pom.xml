@@ -11,8 +11,8 @@
 	<groupId>com.quizhub</groupId>
 	<artifactId>auth-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name/>
-	<description/>
+	<name>auth-service</name>
+	<description>Auth Microservice for QuizHub</description>
 	<url/>
 	<dependencies>
 		<dependency>

@@ -141,4 +141,13 @@ public class QuestionServiceImpl implements QuestionService {
                         .build())
                 .toList();
     }
+    @Override
+    @Transactional(readOnly = true)
+    public InternalQuestionResponse getInternalQuestion(UUID id) {
+
+        Question question = findQuestionById(id);
+
+        return questionMapper.toInternal(question);
+
+    }
 }

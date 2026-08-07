@@ -1,0 +1,392 @@
+version: "3.9"
+
+name: quizhub
+
+services:
+
+  postgres-db:
+    image: postgres:17
+    container_name: quizhub-postgres
+
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: quizhub
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+    networks:
+      - quizhub-network
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+  redis-cache:
+    image: redis:7-alpine
+    container_name: quizhub-redis
+
+    restart: unless-stopped
+
+    ports:
+      - "6379:6379"
+
+    volumes:
+      - redis-data:/data
+
+    networks:
+      - quizhub-network
+
+    command: redis-server --appendonly yes
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    container_name: zookeeper
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - quizhub-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: kafka
+    restart: unless-stopped
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+    networks:
+      - quizhub-network
+
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - quizhub-network
+
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - quizhub-network
+
+  zipkin:
+    image: openzipkin/zipkin:latest
+    container_name: zipkin
+    restart: unless-stopped
+    ports:
+      - "9411:9411"
+    networks:
+      - quizhub-network
+
+  config-server:
+    build:
+      context: ../../backend/config-server
+      dockerfile: Dockerfile
+
+    container_name: config-server
+
+    ports:
+      - "8888:8888"
+
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+
+    networks:
+      - quizhub-network
+
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+
+  discovery-server:
+    build:
+      context: ../../backend/discovery-server
+      dockerfile: Dockerfile
+
+    container_name: discovery-server
+
+    ports:
+      - "8761:8761"
+
+    environment:
+      CONFIG_SERVER_HOST: config-server
+
+    depends_on:
+      config-server:
+        condition: service_started
+
+    networks:
+      - quizhub-network
+
+  auth-service:
+    build:
+      context: ../../backend/auth-service
+      dockerfile: Dockerfile
+
+    container_name: auth-service
+
+    ports:
+      - "9001:9001"
+
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      CONFIG_SERVER_HOST: config-server
+      EUREKA_HOST: discovery-server
+
+      DB_HOST: postgres-db
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+      discovery-server:
+        condition: service_started
+
+    networks:
+      - quizhub-network
+
+  quiz-service:
+    build:
+      context: ../../backend/quiz-service
+      dockerfile: Dockerfile
+
+    container_name: quiz-service
+
+    ports:
+      - "9002:9002"
+
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      CONFIG_SERVER_HOST: config-server
+      EUREKA_HOST: discovery-server
+
+      DB_HOST: postgres-db
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+
+      REDIS_HOST: redis-cache
+      REDIS_PORT: 6379
+
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+      discovery-server:
+        condition: service_started
+
+    networks:
+      - quizhub-network
+
+  question-service:
+    build:
+      context: ../../backend/question-service
+      dockerfile: Dockerfile
+
+    container_name: question-service
+
+    ports:
+      - "9003:9003"
+
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      CONFIG_SERVER_HOST: config-server
+      EUREKA_HOST: discovery-server
+
+      DB_HOST: postgres-db
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+
+      REDIS_HOST: redis-cache
+      REDIS_PORT: 6379
+
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+      discovery-server:
+        condition: service_started
+
+    networks:
+      - quizhub-network
+
+  submission-service:
+    build:
+      context: ../../backend/submission-service
+      dockerfile: Dockerfile
+
+    container_name: submission-service
+
+    ports:
+      - "9004:9004"
+
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      CONFIG_SERVER_HOST: config-server
+      EUREKA_HOST: discovery-server
+
+      DB_HOST: postgres-db
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+
+      KAFKA_HOST: kafka
+      KAFKA_PORT: 9092
+
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      config-server:
+        condition: service_started
+      discovery-server:
+        condition: service_started
+
+    networks:
+      - quizhub-network
+
+  result-service:
+    build:
+      context: ../../backend/result-service
+      dockerfile: Dockerfile
+
+    container_name: result-service
+
+    ports:
+      - "9005:9005"
+
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      CONFIG_SERVER_HOST: config-server
+      EUREKA_HOST: discovery-server
+
+      DB_HOST: postgres-db
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+
+      KAFKA_HOST: kafka
+      KAFKA_PORT: 9092
+
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      config-server:
+        condition: service_started
+      discovery-server:
+        condition: service_started
+
+    networks:
+      - quizhub-network
+
+  api-gateway:
+    build:
+      context: ../../backend/api-gateway
+      dockerfile: Dockerfile
+
+    container_name: api-gateway
+
+    ports:
+      - "9000:9000"
+
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      CONFIG_SERVER_HOST: config-server
+      EUREKA_HOST: discovery-server
+
+      AUTH_SERVICE_HOST: auth-service
+      AUTH_SERVICE_PORT: 9001
+
+      QUIZ_SERVICE_HOST: quiz-service
+      QUIZ_SERVICE_PORT: 9002
+
+      QUESTION_SERVICE_HOST: question-service
+      QUESTION_SERVICE_PORT: 9003
+
+      SUBMISSION_SERVICE_HOST: submission-service
+      SUBMISSION_SERVICE_PORT: 9004
+
+      RESULT_SERVICE_HOST: result-service
+      RESULT_SERVICE_PORT: 9005
+
+    depends_on:
+      config-server:
+        condition: service_started
+      discovery-server:
+        condition: service_started
+
+    networks:
+      - quizhub-network
+
+volumes:
+
+  postgres-data:
+
+  redis-data:
+
+  grafana-data:
+
+networks:
+
+  quizhub-network:
+    driver: bridge
