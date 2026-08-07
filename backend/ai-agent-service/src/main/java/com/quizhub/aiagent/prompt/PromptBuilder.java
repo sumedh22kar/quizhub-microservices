@@ -91,4 +91,47 @@ public class PromptBuilder {
                         question.getExplanation()
                 );
     }
+    public String buildAnalysisPrompt(InternalQuestionResponse question) {
+
+        return """
+        You are an expert Java educator.
+
+        Analyze this question.
+
+        Question:
+        %s
+
+        Option A:
+        %s
+
+        Option B:
+        %s
+
+        Option C:
+        %s
+
+        Option D:
+        %s
+
+        Return ONLY valid JSON.
+
+        {
+          "difficulty":"",
+          "estimatedTime":"",
+          "concepts":[],
+          "commonMistakes":[],
+          "recommendedTopics":[]
+        }
+
+        Do not return markdown.
+        Do not explain anything outside JSON.
+        """
+                .formatted(
+                        question.getQuestionText(),
+                        question.getOptionA(),
+                        question.getOptionB(),
+                        question.getOptionC(),
+                        question.getOptionD()
+                );
+    }
 }
