@@ -9,6 +9,7 @@ import com.quizhub.questionservice.dto.response.QuizOwnerResponse;
 import com.quizhub.questionservice.entity.Question;
 import com.quizhub.questionservice.exception.AccessDeniedException;
 import com.quizhub.questionservice.exception.ResourceNotFoundException;
+import com.quizhub.questionservice.kafka.QuestionUpdatedProducer;
 import com.quizhub.questionservice.mapper.QuestionMapper;
 import com.quizhub.questionservice.repository.QuestionRepository;
 import com.quizhub.questionservice.security.UserContext;
@@ -33,6 +34,7 @@ public class QuestionServiceImpl implements QuestionService {
     private final QuizServiceClient quizServiceClient;
     private final UserContext userContext;
     private final CacheManager cacheManager;
+    private final QuestionUpdatedProducer questionUpdatedProducer;
 
     @Override
     @CacheEvict(value = "questions", key = "#result.quizId")
@@ -62,6 +64,11 @@ public class QuestionServiceImpl implements QuestionService {
 
         questionMapper.updateEntity(request, question);
         Question updatedQuestion = questionRepository.save(question);
+
+        questionUpdatedProducer.sendQuestionUpdatedEvent(
+                updatedQuestion.getId()
+        );
+
         return questionMapper.toResponse(updatedQuestion);
     }
 

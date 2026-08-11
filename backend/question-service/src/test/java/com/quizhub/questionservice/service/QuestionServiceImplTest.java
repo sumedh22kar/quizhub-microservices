@@ -52,6 +52,9 @@ class QuestionServiceImplTest {
     @Mock
     private Cache cache;
 
+    @Mock
+    private com.quizhub.questionservice.kafka.QuestionUpdatedProducer questionUpdatedProducer;
+
     @InjectMocks
     private QuestionServiceImpl questionService;
 
