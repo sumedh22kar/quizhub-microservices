@@ -248,6 +248,10 @@ sequenceDiagram
   - High-performance caching layer with Redis (`6379`) providing 6-hour TTL and JSON serialization.
   - Sub-millisecond (`<10ms`) responses on repeat AI requests for question explanations, hints, analyses, and reviews.
   - `POST /api/v1/ai/study-plan/{submissionId}` — Generates customized 2–3 week learning roadmaps based on student mistake patterns and strengths.
+- **Sprint 7.8 — Event-Driven AI Cache Invalidation via Kafka ✅**
+  - Implemented `QuestionUpdatedEvent` publishing in Question Service on question updates.
+  - Reactive consumer in AI Agent Service dynamically evicts stale `ai-explain`, `ai-hint`, and `ai-analysis` caches.
+
 
 ---
 

@@ -24,10 +24,7 @@ public class QuestionUpdatedProducer {
                         .questionId(questionId)
                         .build();
 
-        log.info(
-                "Publishing QuestionUpdatedEvent for questionId: {}",
-                questionId
-        );
+        log.info("Publishing QuestionUpdatedEvent: {}", event);
 
         kafkaTemplate.send(
                 TOPIC,
