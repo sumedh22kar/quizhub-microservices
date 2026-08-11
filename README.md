@@ -251,6 +251,10 @@ sequenceDiagram
 - **Sprint 7.8 — Event-Driven AI Cache Invalidation via Kafka ✅**
   - Implemented `QuestionUpdatedEvent` publishing in Question Service on question updates.
   - Reactive consumer in AI Agent Service dynamically evicts stale `ai-explain`, `ai-hint`, and `ai-analysis` caches.
+- **Sprint 7.9 — Redis Token-Bucket / Sliding Window Rate Limiting ✅**
+  - Implemented atomic Lua-scripted rate limiting (`RateLimitService`) backed by Redis.
+  - Intercepts incoming AI requests via `AiRateLimitFilter` with automatic HTTP 429 Too Many Requests response on threshold breach (10 requests/minute per client/IP).
+
 
 
 ---
