@@ -30,6 +30,11 @@ spring:
               uri: http://${RESULT_SERVICE_HOST:localhost}:${RESULT_SERVICE_PORT:9005}
               predicates:
                 - Path=/api/v1/results/**
+            - id: ai-agent-service
+              uri: http://${AI_AGENT_SERVICE_HOST:localhost}:${AI_AGENT_SERVICE_PORT:9006}
+              predicates:
+                - Path=/api/v1/ai/**
+
 
 jwt:
   secret: ${JWT_SECRET:VGhpc0lzQVN1cGVyU2VjdXJlSldUU2VjcmV0S2V5Rm9yUXVpekh1YkF1dGhTZXJ2aWNlMTIzNDU2Nzg5}

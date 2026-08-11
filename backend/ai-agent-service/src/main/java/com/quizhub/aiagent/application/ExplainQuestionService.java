@@ -3,10 +3,10 @@ package com.quizhub.aiagent.application;
 import com.quizhub.aiagent.client.QuestionServiceClient;
 import com.quizhub.aiagent.dto.InternalQuestionResponse;
 import com.quizhub.aiagent.dto.response.AIResponse;
-import com.quizhub.aiagent.infrastructure.llm.LLMService;
-import com.quizhub.aiagent.prompt.PromptBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -17,9 +17,12 @@ import java.util.UUID;
 public class ExplainQuestionService {
 
     private final QuestionServiceClient questionClient;
-    private final PromptBuilder promptBuilder;
-    private final LLMService llmService;
+    private final AiCacheService aiCacheService;
 
+    @Value("${spring.ai.ollama.chat.options.model:qwen3:8b}")
+    private String modelName;
+
+    @Cacheable(value = "ai-explain", key = "#questionId")
     public AIResponse explain(UUID questionId) {
 
         long start = System.currentTimeMillis();
@@ -28,21 +31,16 @@ public class ExplainQuestionService {
         InternalQuestionResponse question =
                 questionClient.getQuestion(questionId);
 
-        log.info("Building prompt");
-        String prompt =
-                promptBuilder.buildExplainPrompt(question);
-
-        log.info("Calling Ollama");
-        String answer =
-                llmService.chat(prompt);
+        String answer = aiCacheService.generateExplain(question);
 
         long end = System.currentTimeMillis();
 
-        log.info("Explanation generated");
+        log.info("Explanation retrieved in {} ms", end - start);
         return AIResponse.builder()
                 .answer(answer)
-                .model("qwen3:8b")
+                .model(modelName)
                 .responseTime(end - start)
                 .build();
     }
 }
+

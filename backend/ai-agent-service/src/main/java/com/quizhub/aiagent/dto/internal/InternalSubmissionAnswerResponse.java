@@ -2,6 +2,7 @@ package com.quizhub.aiagent.dto.internal;
 
 import lombok.*;
 
+import java.io.Serializable;
 import java.util.UUID;
 
 @Getter
@@ -9,7 +10,9 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class InternalSubmissionAnswerResponse {
+public class InternalSubmissionAnswerResponse implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private UUID id;
 

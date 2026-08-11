@@ -1,4 +1,4 @@
-package com.quizhub.aiagent.application.review;
+package com.quizhub.aiagent.application.study;
 
 import com.quizhub.aiagent.application.AiCacheService;
 import com.quizhub.aiagent.client.QuestionServiceClient;
@@ -18,27 +18,24 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ReviewSubmissionService {
+public class StudyPlanService {
 
     private final SubmissionServiceClient submissionServiceClient;
     private final QuestionServiceClient questionServiceClient;
     private final AiCacheService aiCacheService;
 
-    @Cacheable(value = "ai-review", key = "#submissionId")
-    public String reviewSubmission(UUID submissionId) {
+    @Cacheable(value = "ai-study-plan", key = "#submissionId")
+    public String generateStudyPlan(UUID submissionId) {
 
-        // Step 1: Fetch submission
         InternalSubmissionResponse submission =
                 submissionServiceClient.getSubmission(submissionId);
 
-        // Step 2: Extract question IDs
         List<UUID> questionIds =
                 submission.getAnswers()
                         .stream()
                         .map(InternalSubmissionAnswerResponse::getQuestionId)
                         .toList();
 
-        // Step 3: Fetch questions
         List<InternalQuestionResponse> questions =
                 questionServiceClient.getQuestions(
                         BatchQuestionRequest.builder()
@@ -46,8 +43,7 @@ public class ReviewSubmissionService {
                                 .build()
                 );
 
-        // Step 4: Delegate to cached AI service
-        return aiCacheService.generateReview(
+        return aiCacheService.generateStudyPlan(
                 submissionId,
                 questions,
                 submission.getAnswers()

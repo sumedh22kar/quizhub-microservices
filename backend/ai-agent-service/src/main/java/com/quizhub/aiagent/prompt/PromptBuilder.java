@@ -188,4 +188,68 @@ Finally provide:
 
         return prompt.toString();
     }
+    public String buildStudyPlanPrompt(
+            List<InternalQuestionResponse> questions,
+            List<InternalSubmissionAnswerResponse> answers
+    ) {
+
+        StringBuilder prompt = new StringBuilder();
+
+        prompt.append("""
+You are an expert programming mentor.
+
+Analyze the student's quiz performance and create a structured study plan.
+
+Instructions:
+
+- Identify weak areas based on incorrect answers
+- Identify strong areas
+- Create a 2–3 week study plan
+- Suggest topics and subtopics
+- Recommend learning strategy
+- Keep it practical and structured
+
+Format:
+
+Week 1:
+- Topic
+- Topic
+
+Week 2:
+- Topic
+
+Week 3:
+- Topic
+
+Also include:
+- Strengths
+- Weaknesses
+- Final advice
+
+""");
+
+        for (InternalQuestionResponse question : questions) {
+
+            var answer = answers.stream()
+                    .filter(a -> a.getQuestionId().equals(question.getId()))
+                    .findFirst()
+                    .orElse(null);
+
+            prompt.append("\n-----------------\n");
+            prompt.append("Question: ").append(question.getQuestionText()).append("\n");
+            prompt.append("Correct Answer: ").append(question.getCorrectAnswer()).append("\n");
+
+            if (answer != null) {
+                prompt.append("Student Answer: ")
+                        .append(answer.getSelectedAnswer())
+                        .append("\n");
+
+                prompt.append("Is Correct: ")
+                        .append(answer.getIsCorrect())
+                        .append("\n");
+            }
+        }
+
+        return prompt.toString();
+    }
 }
