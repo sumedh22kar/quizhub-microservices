@@ -110,6 +110,12 @@
 			<groupId>org.springframework.kafka</groupId>
 			<artifactId>spring-kafka</artifactId>
 		</dependency>
+
+		<!-- 14. Micrometer Prometheus Registry -->
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-registry-prometheus</artifactId>
+		</dependency>
 	</dependencies>
 
 	<repositories>

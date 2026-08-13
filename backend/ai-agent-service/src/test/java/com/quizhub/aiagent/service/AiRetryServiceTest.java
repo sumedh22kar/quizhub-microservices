@@ -3,6 +3,8 @@ package com.quizhub.aiagent.service;
 import com.quizhub.aiagent.dto.response.QuestionAnalysisResponse;
 import com.quizhub.aiagent.exception.AiResponseParsingException;
 import com.quizhub.aiagent.infrastructure.llm.LLMService;
+import com.quizhub.aiagent.metrics.AiMetrics;
+import io.micrometer.core.instrument.Counter;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -20,6 +22,9 @@ class AiRetryServiceTest {
 
     @Mock
     private AiResponseParser aiResponseParser;
+
+    @Mock
+    private AiMetrics aiMetrics;
 
     @Test
     void shouldRetryWhenFirstResponseIsInvalid() {
@@ -72,10 +77,14 @@ class AiRetryServiceTest {
         when(aiResponseParser.parse(validResponse))
                 .thenReturn(expected);
 
+        Counter retryCounter = mock(Counter.class);
+        when(aiMetrics.llmRetries()).thenReturn(retryCounter);
+
         AiRetryService retryService =
                 new AiRetryService(
                         llmService,
-                        aiResponseParser
+                        aiResponseParser,
+                        aiMetrics
                 );
 
         QuestionAnalysisResponse result =
@@ -92,6 +101,8 @@ class AiRetryServiceTest {
 
         verify(aiResponseParser, times(2))
                 .parse(anyString());
+
+        verify(retryCounter, times(1)).increment();
     }
 
     @Test
@@ -112,10 +123,14 @@ class AiRetryServiceTest {
                         )
                 );
 
+        Counter retryCounter = mock(Counter.class);
+        when(aiMetrics.llmRetries()).thenReturn(retryCounter);
+
         AiRetryService retryService =
                 new AiRetryService(
                         llmService,
-                        aiResponseParser
+                        aiResponseParser,
+                        aiMetrics
                 );
 
         assertThrows(
@@ -131,5 +146,7 @@ class AiRetryServiceTest {
 
         verify(aiResponseParser, times(2))
                 .parse(anyString());
+
+        verify(retryCounter, times(1)).increment();
     }
 }

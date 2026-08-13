@@ -43,4 +43,13 @@ feign:
         connect-timeout: 10000
         read-timeout: 60000
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always
+
 

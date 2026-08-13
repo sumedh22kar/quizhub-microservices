@@ -2,6 +2,7 @@ package com.quizhub.aiagent.service;
 
 import com.quizhub.aiagent.exception.AiResponseParsingException;
 import com.quizhub.aiagent.infrastructure.llm.LLMService;
+import com.quizhub.aiagent.metrics.AiMetrics;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,7 @@ public class AiRetryService {
 
     private final LLMService llmService;
     private final AiResponseParser aiResponseParser;
+    private final AiMetrics aiMetrics;
 
     public <T> T executeWithRetry(
             String prompt,
@@ -49,6 +51,13 @@ public class AiRetryService {
                 if (attempt == MAX_RETRIES) {
                     throw ex;
                 }
+
+                aiMetrics.llmRetries().increment();
+
+                log.info(
+                        "Retrying AI request. Retry attempt: {}",
+                        attempt + 1
+                );
 
                 currentPrompt = prompt + """
 

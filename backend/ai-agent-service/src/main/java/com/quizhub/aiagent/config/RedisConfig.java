@@ -3,8 +3,11 @@ package com.quizhub.aiagent.config;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
+import com.quizhub.aiagent.metrics.AiMetrics;
+import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -20,7 +23,7 @@ import java.time.Duration;
 public class RedisConfig {
 
     @Bean
-    public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+    public RedisCacheManager redisCacheManager(RedisConnectionFactory connectionFactory) {
 
         ObjectMapper mapper = new ObjectMapper();
         mapper.findAndRegisterModules();
@@ -49,6 +52,18 @@ public class RedisConfig {
     }
 
     @Bean
+    @Primary
+    public CacheManager cacheManager(
+            RedisCacheManager redisCacheManager,
+            AiMetrics aiMetrics
+    ) {
+        return new MeteredCacheManager(
+                redisCacheManager,
+                aiMetrics
+        );
+    }
+
+    @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
@@ -60,4 +75,3 @@ public class RedisConfig {
         return template;
     }
 }
-
