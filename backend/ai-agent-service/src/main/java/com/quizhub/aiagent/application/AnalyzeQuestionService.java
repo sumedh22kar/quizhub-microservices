@@ -5,7 +5,6 @@ import com.quizhub.aiagent.dto.InternalQuestionResponse;
 import com.quizhub.aiagent.dto.response.QuestionAnalysisResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -18,7 +17,6 @@ public class AnalyzeQuestionService {
     private final QuestionServiceClient questionClient;
     private final AiCacheService aiCacheService;
 
-    @Cacheable(value = "ai-analysis", key = "#questionId")
     public QuestionAnalysisResponse analyze(UUID questionId) {
 
         log.info("Fetching question {}", questionId);

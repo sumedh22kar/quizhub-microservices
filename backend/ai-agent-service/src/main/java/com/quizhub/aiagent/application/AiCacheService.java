@@ -1,11 +1,12 @@
 package com.quizhub.aiagent.application;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.quizhub.aiagent.dto.InternalQuestionResponse;
 import com.quizhub.aiagent.dto.internal.InternalSubmissionAnswerResponse;
 import com.quizhub.aiagent.dto.response.QuestionAnalysisResponse;
 import com.quizhub.aiagent.infrastructure.llm.LLMService;
 import com.quizhub.aiagent.prompt.PromptBuilder;
+import com.quizhub.aiagent.service.AiResponseParser;
+import com.quizhub.aiagent.service.AiRetryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -21,7 +22,8 @@ public class AiCacheService {
 
     private final PromptBuilder promptBuilder;
     private final LLMService llmService;
-    private final ObjectMapper objectMapper;
+    private final AiResponseParser aiResponseParser;
+    private final AiRetryService aiRetryService;
 
     @Cacheable(value = "ai-explain", key = "#question.id")
     public String generateExplain(InternalQuestionResponse question) {
@@ -41,12 +43,10 @@ public class AiCacheService {
     public QuestionAnalysisResponse generateAnalysis(InternalQuestionResponse question) {
         log.info("🔥 LLM CALLED: generateAnalysis for question {}", question.getId());
         String prompt = promptBuilder.buildAnalysisPrompt(question);
-        String response = llmService.chat(prompt);
-        try {
-            return objectMapper.readValue(response, QuestionAnalysisResponse.class);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to parse AI response", e);
-        }
+        return aiRetryService.executeWithRetry(
+                prompt,
+                aiResponseParser::parseAnalysis
+        );
     }
 
     @Cacheable(value = "ai-review", key = "#submissionId")
