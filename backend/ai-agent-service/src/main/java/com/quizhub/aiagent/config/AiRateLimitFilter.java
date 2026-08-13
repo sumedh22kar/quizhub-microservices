@@ -1,5 +1,6 @@
 package com.quizhub.aiagent.config;
 
+import com.quizhub.aiagent.metrics.AiMetrics;
 import com.quizhub.aiagent.service.RateLimitService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -16,6 +17,7 @@ import java.io.IOException;
 public class AiRateLimitFilter extends OncePerRequestFilter {
 
     private final RateLimitService rateLimitService;
+    private final AiMetrics aiMetrics;
 
     @Override
     protected void doFilterInternal(
@@ -37,6 +39,8 @@ public class AiRateLimitFilter extends OncePerRequestFilter {
                 rateLimitService.isAllowed(clientId);
 
         if (!allowed) {
+
+            aiMetrics.rateLimitExceeded().increment();
 
             response.setStatus(429);
             response.setContentType("application/json");
