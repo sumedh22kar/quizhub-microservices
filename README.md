@@ -109,7 +109,7 @@ flowchart TB
 | **Sprint 4** | **Question Service** | ✅ Complete | Question CRUD, Activation/Deactivation, Internal Batch Endpoint |
 | **Sprint 5** | **Submission Service** | ✅ Complete | Quiz Session Initiation, Answer Evaluation, Kafka `QuizSubmittedEvent` |
 | **Sprint 6** | **Result Service + Kafka** | ✅ Complete | Kafka Consumer, Scoring, Leaderboard, Producer/Consumer Deserialization Fixes |
-| **Sprint 7** | **AI Agent (Spring AI + Ollama)** | 🚧 In Progress | Question Explain, Hints, Diagnostic Analysis, AI Submission Review Pipeline |
+| **Sprint 7** | **AI Agent (Spring AI + Ollama)** | ✅ Complete | Local LLM (qwen3:8b), Explain, Hint, Analysis, Review, Study Plan, Metered Cache, Rate Limiting, Retry Engine, Prometheus & Grafana Observability |
 
 ---
 
@@ -162,6 +162,7 @@ flowchart TB
 - **4.3 Internal APIs:**
   - Single question retrieval and bulk retrieval by Quiz ID.
 - **4.4 AI Orchestration Support:**
+  - **Single Question Endpoint:** `GET /api/v1/internal/questions/{id}` — Individual question lookup for AI tutor explanations and hint generation.
   - **Batch Question Endpoint:** `POST /internal/questions/batch` — Bulk retrieval of question details to power AI review and prompt generation without repetitive network round-trips.
 
 ---
@@ -196,7 +197,7 @@ flowchart TB
 
 ---
 
-### Sprint 7 — AI Agent 🚧 (In Progress)
+### Sprint 7 — AI Agent ✅
 
 Empowering students and quiz creators with on-demand AI tutoring, automated hints, diagnostic analysis, and holistic submission reviews using local LLMs.
 
@@ -225,8 +226,7 @@ sequenceDiagram
 
 #### Sprint 7 Milestones:
 - **Sprint 7.1 — AI Infrastructure ✅**
-  - Spring AI starter integration.
-  - Local Ollama connection configuration (`http://localhost:11434`).
+  - Spring AI starter integration with local Ollama connection (`http://localhost:11434`).
   - Model selection: `qwen3:8b` (Temperature: 0.7).
   - `LLMService` client abstraction with unified prompt handling.
 - **Sprint 7.2 — Explain Question ✅**
@@ -234,16 +234,11 @@ sequenceDiagram
 - **Sprint 7.3 — Hint Generation ✅**
   - `POST /api/v1/ai/hint-question/{id}` — Generates progressive, non-spoiler hints to assist learners during quiz attempts.
 - **Sprint 7.4 — Question Analysis ✅**
-  - `POST /api/v1/ai/analyze-question/{id}` — Structured analysis returning JSON with:
-    - **Difficulty Level** (Beginner, Intermediate, Advanced)
-    - **Core Concepts** tested
-    - **Common Mistakes & Pitfalls**
-    - **Recommended Learning Topics**
-- **Sprint 7.5 — Batch Question Retrieval ✅**
-  - Implemented `POST /internal/questions/batch` on Question Service for bulk fetching.
+  - `POST /api/v1/ai/analyze-question/{id}` — Structured analysis returning JSON with difficulty level, core concepts, common mistakes, and recommended topics.
+- **Sprint 7.5 — Batch Question Retrieval & Feign Client ✅**
+  - Implemented `POST /internal/questions/batch` and `GET /api/v1/internal/questions/{id}` with OpenFeign integration.
 - **Sprint 7.6 — AI Submission Review ✅**
-  - `POST /api/v1/ai/review-submission/{submissionId}`
-  - End-to-end orchestration: Fetches submission ➔ Batch question lookup ➔ Builds rich pedagogical prompt ➔ Obtains deep review and recommendations from `qwen3:8b`.
+  - `POST /api/v1/ai/review-submission/{submissionId}` — End-to-end orchestration: Fetches submission ➔ Batch question lookup ➔ Builds rich pedagogical prompt ➔ Deep review and recommendations from `qwen3:8b`.
 - **Sprint 7.7 — Redis AI Response Caching & Study Plan Generation ✅**
   - High-performance caching layer with Redis (`6379`) providing 6-hour TTL and JSON serialization.
   - Sub-millisecond (`<10ms`) responses on repeat AI requests for question explanations, hints, analyses, and reviews.
@@ -254,6 +249,13 @@ sequenceDiagram
 - **Sprint 7.9 — Redis Token-Bucket / Sliding Window Rate Limiting ✅**
   - Implemented atomic Lua-scripted rate limiting (`RateLimitService`) backed by Redis.
   - Intercepts incoming AI requests via `AiRateLimitFilter` with automatic HTTP 429 Too Many Requests response on threshold breach (10 requests/minute per client/IP).
+- **Sprint 7.10 — AI Robustness, JSON Parsing & Retry Mechanism ✅**
+  - Built `AiResponseParser` with markdown/code-fence stripping and JSON structure validation.
+  - Built `AiRetryService` executing automatic corrective re-prompting on malformed LLM responses with deterministic unit test validation (`AiRetryServiceTest`).
+- **Sprint 7.11 — Full-Stack AI Observability & Grafana Dashboard ✅**
+  - Custom Micrometer metrics instrumentation (`AiMetrics`) recording `quizhub_ai_llm_requests_total`, `quizhub_ai_llm_failures_total`, `quizhub_ai_llm_retries_total`, `quizhub_ai_llm_duration_seconds`, `quizhub_ai_cache_hits_total`, `quizhub_ai_cache_misses_total`, and `quizhub_ai_rate_limit_exceeded_total`.
+  - Transparent cache hit/miss tracking using decorator pattern (`MeteredCache` & `MeteredCacheManager`).
+  - Pre-provisioned Grafana dashboard (`QuizHub AI Agent`) with real-time stats, latency tracking, cache hit ratios, and rate limit monitors.
 
 
 
@@ -305,6 +307,7 @@ sequenceDiagram
 | `GET` | `/api/v1/questions/{id}` | Get question by ID |
 | `PUT` | `/api/v1/questions/{id}` | Update question |
 | `DELETE` | `/api/v1/questions/{id}` | Delete question |
+| `GET` | `/api/v1/internal/questions/{id}` | *(Internal)* Fetch single question with answers & explanation |
 | `POST` | `/internal/questions/batch` | *(Internal)* Fetch questions by list of IDs |
 
 ### 📥 Submission Service (`/api/v1/submissions`)
@@ -323,6 +326,7 @@ sequenceDiagram
 ### 🤖 AI Agent Service (`/api/v1/ai`)
 | Method | Endpoint | Description |
 |---|---|---|
+| `POST` | `/api/v1/ai/chat` | General interactive AI chat assistant |
 | `POST` | `/api/v1/ai/explain-question/{id}` | Generate an in-depth pedagogical explanation |
 | `POST` | `/api/v1/ai/hint-question/{id}` | Generate a progressive hint without revealing the answer |
 | `POST` | `/api/v1/ai/analyze-question/{id}` | Diagnostic breakdown (difficulty, concepts, mistakes, recommendations) |
@@ -381,7 +385,7 @@ To ensure proper configuration and service registration, launch microservices in
 | **Eureka Dashboard** | [http://localhost:8761](http://localhost:8761) | Live view of registered service instances |
 | **API Gateway** | [http://localhost:9000](http://localhost:9000) | Primary API ingress |
 | **Prometheus** | [http://localhost:9090](http://localhost:9090) | Metrics scraping and query console |
-| **Grafana** | [http://localhost:3000](http://localhost:3000) | `admin` / `admin` (Pre-configured QuizHub overview dashboard) |
+| **Grafana** | [http://localhost:3000](http://localhost:3000) | `admin` / `admin`<br>• **QuizHub Microservices Overview** (System & JVM metrics)<br>• **QuizHub AI Agent** (Cache hits/misses, LLM latency, retries, rate limits) |
 | **Zipkin** | [http://localhost:9411](http://localhost:9411) | Distributed tracing UI |
 
 ---
